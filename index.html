@@ -108,7 +108,7 @@
             <div class="h-1/4 mb-4">
                 <div class="weather-card rounded-2xl p-6 h-full flex items-center justify-between slide-in">
                     <div class="flex items-center space-x-6">
-                        <div id="weather-icon" class="text-8xl">⏳</div>
+                        <div id="weather-icon" class="text-7xl">⏳</div>
                         <div class="flex flex-col">
                             <span id="current-temp" class="text-5xl font-bold">--°C</span>
                             <span id="weather-desc" class="text-xl opacity-80">読み込み中</span>
@@ -128,7 +128,7 @@
             </div>
             
             <div class="h-1/2 mb-4">
-                <div class="weather-card rounded-2xl p-6 h-full slide-in">
+                <div class="weather-card rounded-2xl p-2 h-full slide-in">
                     <div class="h-full">
                         <canvas id="forecast-chart" class="w-full h-full"></canvas>
                     </div>
@@ -166,7 +166,7 @@
             // 緯度・経度を設定（東大和市の場合）
             const lat = 35.7505;
             const lon = 139.4296;
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&hourly=temperature_2m,precipitation_probability&current=temperature_2m&timezone=Asia%2FTokyo`;
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&hourly=temperature_2m,precipitation_probability&current=temperature_2m&timezone=Asia%2FTokyo`;
             
             // 時刻更新関数
             function updateTime() {
@@ -318,12 +318,10 @@
                         dayElement.className = 'flex flex-col items-center justify-center text-center space-y-1';
                         
                         dayElement.innerHTML = `
-                            <div class="text-xs opacity-70">${i === 0 ? '今日' : dayName}</div>
-                            <div class="text-lg">${getWeatherIcon(weatherCode)}</div>
-                            <div class="text-xs">
-                                <span class="text-red-300">${maxTemp}</span>
-                                <span class="opacity-50">/</span>
-                                <span class="text-blue-300">${minTemp}</span>
+                            <div class="text-base opacity-70">${i === 0 ? '今日' : dayName}</div>
+                            <div class="text-2xl">${getWeatherIcon(weatherCode)}</div>
+                            <div class="text-base">
+                                <span class="text-red-300">${maxTemp}</span><span class="opacity-50">/</span><span class="text-blue-300">${minTemp}</span>
                             </div>
                         `;
 
@@ -371,6 +369,52 @@
                         const prob = hourlyData.precipitation_probability[index] || 0;
                         precipitationProb.push(prob);
                     }
+
+                    // 日の出・日の入り時刻を取得
+                    const dailyData = data.daily;
+                    const today = new Date().toISOString().split('T')[0];
+                    console.log('今日の日付:', today);
+                    console.log('dailyData.time:', dailyData.time);
+                    
+                    // 今日または最も近い日付を見つける
+                    let todayIndex = dailyData.time.findIndex(d => d === today);
+                    if (todayIndex === -1) {
+                        // 今日の日付が見つからない場合、最初の日付を使用
+                        todayIndex = 0;
+                        console.log('今日の日付が見つからないため、最初の日付を使用:', dailyData.time[0]);
+                    }
+                    
+                    const sunrise = new Date(dailyData.sunrise[todayIndex]);
+                    const sunset = new Date(dailyData.sunset[todayIndex]);
+                    
+                    console.log('todayIndex:', todayIndex);
+                    console.log('sunrise:', sunrise);
+                    console.log('sunset:', sunset);
+                    
+                    // 日の出・日の入りのインデックスを計算
+                    let sunriseIndex = -1, sunsetIndex = -1;
+                    if (sunrise) {
+                        for (let i = 0; i < labels.length; i++) {
+                            const hour = parseInt(labels[i].split(':')[0]);
+                            if (hour === sunrise.getHours()) {
+                                sunriseIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                    if (sunset) {
+                        for (let i = 0; i < labels.length; i++) {
+                            const hour = parseInt(labels[i].split(':')[0]);
+                            if (hour === sunset.getHours()) {
+                                sunsetIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    console.log('sunriseIndex:', sunriseIndex);
+                    console.log('sunsetIndex:', sunsetIndex);
+                    console.log('labels:', labels);
                     
                     const ctx = document.getElementById('forecast-chart').getContext('2d');
                     
@@ -378,14 +422,41 @@
                     if (window.myChart) {
                         window.myChart.destroy();
                     }
+
+                    // 日の出・日の入りを描画するプラグイン
+                    const sunriseSunsetPlugin = {
+                        id: 'sunriseSunset',
+                        beforeDraw: function(chart, args, options) {
+                            const ctx = chart.ctx;
+                            const chartArea = chart.chartArea;
+                            const xScale = chart.scales.x;
+                            
+                            ctx.save();
+                            
+                            // 日中の時間帯をハイライト（より薄い色で背景に）
+                            if (options.sunriseIndex >= 0 && options.sunsetIndex >= 0) {
+                                const sunriseX = xScale.getPixelForValue(options.sunriseIndex);
+                                const sunsetX = xScale.getPixelForValue(options.sunsetIndex);
+                                
+                                // 日中のハイライト背景（さらに薄く）
+                                ctx.fillStyle = 'rgba(255, 248, 220, 0.08)';
+                                ctx.fillRect(sunriseX, chartArea.top, sunsetX - sunriseX, chartArea.bottom - chartArea.top);
+                            }
+                            
+                            ctx.restore();
+                        }
+                    };
+                    
+                    // プラグインを登録
+                    Chart.register(sunriseSunsetPlugin);
                     
                     const tempGradient = ctx.createLinearGradient(0, 0, 0, 200);
-                    tempGradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
-                    tempGradient.addColorStop(1, 'rgba(16, 185, 129, 0.1)');
+                    tempGradient.addColorStop(0, 'rgba(249, 115, 22, 0.3)');
+                    tempGradient.addColorStop(1, 'rgba(249, 115, 22, 0.05)');
 
                     const rainGradient = ctx.createLinearGradient(0, 0, 0, 200);
-                    rainGradient.addColorStop(0, 'rgba(147, 51, 234, 0.3)');
-                    rainGradient.addColorStop(1, 'rgba(147, 51, 234, 0.1)');
+                    rainGradient.addColorStop(0, 'rgba(59, 130, 246, 0.25)');
+                    rainGradient.addColorStop(1, 'rgba(59, 130, 246, 0.05)');
 
                     window.myChart = new Chart(ctx, {
                         type: 'line',
@@ -394,8 +465,8 @@
                             datasets: [{
                                 label: '気温 (°C)',
                                 data: temps,
-                                backgroundColor: tempGradient,
-                                borderColor: 'rgba(59, 130, 246, 1)',
+                                backgroundColor: 'rgba(249, 115, 22, 0.05)',
+                                borderColor: 'rgba(249, 115, 22, 1)',
                                 borderWidth: 2,
                                 pointRadius: 0,
                                 fill: true,
@@ -404,8 +475,8 @@
                             }, {
                                 label: '降水確率 (%)',
                                 data: precipitationProb,
-                                backgroundColor: rainGradient,
-                                borderColor: 'rgba(147, 51, 234, 1)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                                borderColor: 'rgba(59, 130, 246, 1)',
                                 borderWidth: 2,
                                 pointRadius: 0,
                                 fill: true,
@@ -416,11 +487,24 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            layout: {
+                                padding: {
+                                    bottom: 0
+                                }
+                            },
                             scales: {
                                 x: {
                                     ticks: { 
                                         color: 'rgba(255, 255, 255, 0.8)',
-                                        maxTicksLimit: 8
+                                        maxTicksLimit: 8,
+                                        font: { size: 15 },
+                                        maxRotation: 0,
+                                        autoSkip: true,
+                                        callback: function(value, index, values) {
+                                            const label = this.getLabelForValue(value);
+                                            if (!label) return '';
+                                            return label.split(':')[0];
+                                        }
                                     },
                                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                                 },
@@ -429,10 +513,15 @@
                                     display: true,
                                     position: 'left',
                                     ticks: { 
-                                        color: 'rgba(59, 130, 246, 0.8)',
+                                        color: 'rgba(249, 115, 22, 0.8)',
+                                        font: { size: 15 },
+                                        maxRotation: 0,
                                         callback: function(value) { return value + '°C'; }
                                     },
-                                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    title: {
+                                        display: false
+                                    }
                                 },
                                 y1: {
                                     type: 'linear',
@@ -441,10 +530,17 @@
                                     min: 0,
                                     max: 100,
                                     ticks: { 
-                                        color: 'rgba(147, 51, 234, 0.8)',
+                                        color: 'rgba(59, 130, 246, 0.8)',
+                                        font: { size: 15 },
+                                        stepSize: 20,
+                                        maxRotation: 0,
                                         callback: function(value) { return value + '%'; }
                                     },
-                                    grid: { drawOnChartArea: false }
+                                    grid: { drawOnChartArea: false },
+                                    offset: false,
+                                    title: {
+                                        display: false
+                                    }
                                 }
                             },
                             plugins: {
@@ -462,6 +558,10 @@
                                             return label;
                                         }
                                     }
+                                },
+                                sunriseSunset: {
+                                    sunriseIndex: sunriseIndex,
+                                    sunsetIndex: sunsetIndex
                                 }
                             }
                         }
@@ -546,7 +646,7 @@
             setInterval(createForecastChart, 20000); // 20秒毎に更新
             setInterval(updateWeeklyForecast, 20000); // 20秒毎に更新
 
-            アニメーション遅延設定
+            // アニメーション遅延設定
             setTimeout(() => {
                 document.querySelectorAll('.slide-in').forEach((el, index) => {
                     el.style.animationDelay = `${index * 0.2}s`;
