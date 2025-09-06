@@ -647,9 +647,9 @@
             updateWeeklyForecast();
             
             setInterval(updateTime, 1000);
-            setInterval(updateWeatherData, 20000); // 20秒毎に更新
-            setInterval(createForecastChart, 20000); // 20秒毎に更新
-            setInterval(updateWeeklyForecast, 20000); // 20秒毎に更新
+            setInterval(updateWeatherData, 300000); // 5分毎に更新
+            setInterval(createForecastChart, 300000); // 5分毎に更新
+            setInterval(updateWeeklyForecast, 300000); // 5分毎に更新
 
             // アニメーション遅延設定
             setTimeout(() => {
