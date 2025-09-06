@@ -95,7 +95,7 @@
             
             <div class="h-24 flex flex-col items-center justify-end space-y-4 slide-in pb-6">
                 <div class="text-center">
-                    <div id="date-display" class="text-4xl font-light mb-3" style="font-size: 2rem; line-height: 1.2;"></div>
+                    <div id="date-display" class="text-4xl font-light mb-3 opacity-80" style="font-size: 2rem; line-height: 1.2;"></div>
                     <div class="relative mx-auto w-72">
                         <div class="absolute -top-4 left-0 w-full h-6 opacity-25 blur-lg overflow-hidden" style="background: radial-gradient(ellipse 80% 200% at center bottom, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.3) 30%, transparent 50%);"></div>
                         <div class="w-full h-px" style="background: linear-gradient(to bottom, #6b7280 0%, #4b5563 100%);"></div>
@@ -106,11 +106,11 @@
 
         <div class="w-1/2 flex flex-col p-6">
             <div class="h-1/4 mb-4">
-                <div class="weather-card rounded-2xl p-6 h-full flex items-center justify-between slide-in">
+                <div class="weather-card rounded-md p-6 h-full flex items-center justify-between slide-in">
                     <div class="flex items-center space-x-6">
                         <div id="weather-icon" class="text-7xl">⏳</div>
                         <div class="flex flex-col">
-                            <span id="current-temp" class="text-5xl font-bold">--°C</span>
+                            <span id="current-temp" class="text-5xl font-bold opacity-90">--°C</span>
                             <span id="weather-desc" class="text-xl opacity-80">読み込み中</span>
                         </div>
                     </div>
@@ -128,7 +128,7 @@
             </div>
             
             <div class="h-1/2 mb-4">
-                <div class="weather-card rounded-2xl p-2 h-full slide-in">
+                <div class="weather-card rounded-md p-2 h-full slide-in">
                     <div class="h-full">
                         <canvas id="forecast-chart" class="w-full h-full"></canvas>
                     </div>
@@ -136,7 +136,7 @@
             </div>
             
             <div class="h-1/4">
-                <div class="weather-card rounded-2xl p-4 h-full slide-in">
+                <div class="weather-card rounded-md p-4 h-full slide-in">
                     <div id="weekly-forecast" class="flex justify-between items-center h-full">
                         <div class="text-center text-sm opacity-50">読み込み中...</div>
                     </div>
@@ -146,7 +146,7 @@
     </div>
 
     <!-- 最終更新時刻表示 -->
-    <div id="last-update" class="fixed bottom-4 right-4 text-xs opacity-50 bg-black bg-opacity-30 px-2 py-1 rounded">
+    <div id="last-update" class="fixed bottom-1 right-1 text-xs opacity-50 bg-black bg-opacity-30 px-2 py-1 rounded">
         --:--:--
     </div>
 
