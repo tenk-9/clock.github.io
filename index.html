@@ -108,20 +108,20 @@
             <div class="h-1/4 mb-4">
                 <div class="weather-card rounded-2xl p-6 h-full flex items-center justify-between slide-in">
                     <div class="flex items-center space-x-6">
-                        <div id="weather-icon" class="text-8xl">☀️</div>
+                        <div id="weather-icon" class="text-8xl">⏳</div>
                         <div class="flex flex-col">
-                            <span id="current-temp" class="text-5xl font-bold">25°C</span>
-                            <span id="weather-desc" class="text-xl opacity-80">晴れ</span>
+                            <span id="current-temp" class="text-5xl font-bold">--°C</span>
+                            <span id="weather-desc" class="text-xl opacity-80">読み込み中</span>
                         </div>
                     </div>
                     <div class="flex flex-col items-end space-y-2">
                         <div class="flex items-center space-x-3">
                             <span class="text-sm opacity-70">最高</span>
-                            <span id="high-temp" class="text-3xl text-red-400">30°C</span>
+                            <span id="high-temp" class="text-3xl text-red-400">--°C</span>
                         </div>
                         <div class="flex items-center space-x-3">
                             <span class="text-sm opacity-70">最低</span>
-                            <span id="low-temp" class="text-3xl font-light text-blue-400">18°C</span>
+                            <span id="low-temp" class="text-3xl font-light text-blue-400">--°C</span>
                         </div>
                     </div>
                 </div>
@@ -138,7 +138,7 @@
             <div class="h-1/4">
                 <div class="weather-card rounded-2xl p-4 h-full slide-in">
                     <div id="weekly-forecast" class="flex justify-between items-center h-full">
-                        <!-- 7日間の天気予報がここに表示される -->
+                        <div class="text-center text-sm opacity-50">読み込み中...</div>
                     </div>
                 </div>
             </div>
@@ -420,11 +420,7 @@
                                 x: {
                                     ticks: { 
                                         color: 'rgba(255, 255, 255, 0.8)',
-                                        maxTicksLimit: 8,
-                                        callback: function(value, index, values) {
-                                            const hour = parseInt(this.getLabelForValue(value).split(':')[0]);
-                                            return hour % 3 === 0 ? this.getLabelForValue(value) : '';
-                                        }
+                                        maxTicksLimit: 8
                                     },
                                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                                 },
