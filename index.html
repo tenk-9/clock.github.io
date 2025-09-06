@@ -105,7 +105,7 @@
         </div>
 
         <div class="w-1/2 flex flex-col p-6">
-            <div class="h-1/3 mb-4">
+            <div class="h-1/4 mb-4">
                 <div class="weather-card rounded-2xl p-6 h-full flex items-center justify-between slide-in">
                     <div class="flex items-center space-x-6">
                         <div id="weather-icon" class="text-8xl">☀️</div>
@@ -127,11 +127,18 @@
                 </div>
             </div>
             
-            <div class="h-2/3">
+            <div class="h-1/2 mb-4">
                 <div class="weather-card rounded-2xl p-6 h-full slide-in">
-                    <h3 class="text-xl font-semibold mb-4 opacity-90">24時間予報</h3>
-                    <div class="h-full pb-4">
+                    <div class="h-full">
                         <canvas id="forecast-chart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="h-1/4">
+                <div class="weather-card rounded-2xl p-4 h-full slide-in">
+                    <div id="weekly-forecast" class="flex justify-between items-center h-full">
+                        <!-- 7日間の天気予報がここに表示される -->
                     </div>
                 </div>
             </div>
@@ -159,7 +166,7 @@
             // 緯度・経度を設定（東大和市の場合）
             const lat = 35.7505;
             const lon = 139.4296;
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&hourly=temperature_2m,precipitation&current=temperature_2m&timezone=Asia%2FTokyo`;
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&hourly=temperature_2m,precipitation_probability&current=temperature_2m&timezone=Asia%2FTokyo`;
             
             // 時刻更新関数
             function updateTime() {
@@ -274,6 +281,61 @@
                 }
             }
 
+            // 7日間天気予報表示関数
+            async function updateWeeklyForecast() {
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error(`週間予報データの取得に失敗しました: ${response.status}`);
+                    }
+                    const data = await response.json();
+
+                    const dailyData = data.daily;
+                    const weeklyContainer = document.getElementById('weekly-forecast');
+                    weeklyContainer.innerHTML = '';
+
+                    // 天気コードからアイコンへのマッピング
+                    function getWeatherIcon(weatherCode) {
+                        if (weatherCode >= 0 && weatherCode <= 3) return '☀️'; // 晴れ、一部曇り
+                        if (weatherCode >= 45 && weatherCode <= 48) return '🌫️'; // 霧、靄
+                        if (weatherCode >= 51 && weatherCode <= 57) return '🌧️'; // 霧雨
+                        if (weatherCode >= 61 && weatherCode <= 67) return '🌧️'; // 雨
+                        if (weatherCode >= 71 && weatherCode <= 77) return '🌨️'; // 雪
+                        if (weatherCode >= 80 && weatherCode <= 82) return '🌧️'; // にわか雨
+                        if (weatherCode >= 85 && weatherCode <= 86) return '🌨️'; // にわか雪
+                        if (weatherCode >= 95 && weatherCode <= 99) return '🌩️'; // 雷雨
+                        return '❓';
+                    }
+
+                    for (let i = 0; i < 7; i++) {
+                        const date = new Date(dailyData.time[i]);
+                        const dayName = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+                        const weatherCode = dailyData.weather_code[i];
+                        const maxTemp = Math.round(dailyData.temperature_2m_max[i]);
+                        const minTemp = Math.round(dailyData.temperature_2m_min[i]);
+
+                        const dayElement = document.createElement('div');
+                        dayElement.className = 'flex flex-col items-center justify-center text-center space-y-1';
+                        
+                        dayElement.innerHTML = `
+                            <div class="text-xs opacity-70">${i === 0 ? '今日' : dayName}</div>
+                            <div class="text-lg">${getWeatherIcon(weatherCode)}</div>
+                            <div class="text-xs">
+                                <span class="text-red-300">${maxTemp}</span>
+                                <span class="opacity-50">/</span>
+                                <span class="text-blue-300">${minTemp}</span>
+                            </div>
+                        `;
+
+                        weeklyContainer.appendChild(dayElement);
+                    }
+
+                } catch (error) {
+                    console.error('週間予報データの取得に失敗しました:', error);
+                    document.getElementById('weekly-forecast').innerHTML = '<div class="text-center text-sm opacity-70">予報取得失敗</div>';
+                }
+            }
+
             // 24時間予報グラフ作成関数（Open-Meteo用）
             async function createForecastChart() {
                 try {
@@ -290,6 +352,7 @@
                     const hourlyData = data.hourly;
                     const labels = [];
                     const temps = [];
+                    const precipitationProb = [];
                     
                     // 現在時刻から24時間分のデータを抽出
                     const startIndex = hourlyData.time.findIndex(t => new Date(t).getHours() === nowHour);
@@ -304,6 +367,9 @@
                         const date = new Date(hourlyData.time[index]);
                         labels.push(`${String(date.getHours()).padStart(2, '0')}:00`);
                         temps.push(hourlyData.temperature_2m[index]);
+                        // 降水確率を取得
+                        const prob = hourlyData.precipitation_probability[index] || 0;
+                        precipitationProb.push(prob);
                     }
                     
                     const ctx = document.getElementById('forecast-chart').getContext('2d');
@@ -313,9 +379,13 @@
                         window.myChart.destroy();
                     }
                     
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
-                    gradient.addColorStop(1, 'rgba(16, 185, 129, 0.1)');
+                    const tempGradient = ctx.createLinearGradient(0, 0, 0, 200);
+                    tempGradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
+                    tempGradient.addColorStop(1, 'rgba(16, 185, 129, 0.1)');
+
+                    const rainGradient = ctx.createLinearGradient(0, 0, 0, 200);
+                    rainGradient.addColorStop(0, 'rgba(147, 51, 234, 0.3)');
+                    rainGradient.addColorStop(1, 'rgba(147, 51, 234, 0.1)');
 
                     window.myChart = new Chart(ctx, {
                         type: 'line',
@@ -324,14 +394,23 @@
                             datasets: [{
                                 label: '気温 (°C)',
                                 data: temps,
-                                backgroundColor: gradient,
+                                backgroundColor: tempGradient,
                                 borderColor: 'rgba(59, 130, 246, 1)',
                                 borderWidth: 2,
-                                pointRadius: 5,
-                                pointBackgroundColor: '#fff',
-                                pointBorderColor: 'rgba(59, 130, 246, 1)',
+                                pointRadius: 0,
                                 fill: true,
-                                tension: 0.4
+                                tension: 0.4,
+                                yAxisID: 'y'
+                            }, {
+                                label: '降水確率 (%)',
+                                data: precipitationProb,
+                                backgroundColor: rainGradient,
+                                borderColor: 'rgba(147, 51, 234, 1)',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                fill: true,
+                                tension: 0.4,
+                                yAxisID: 'y1'
                             }]
                         },
                         options: {
@@ -339,12 +418,37 @@
                             maintainAspectRatio: false,
                             scales: {
                                 x: {
-                                    ticks: { color: 'rgba(255, 255, 255, 0.8)' },
+                                    ticks: { 
+                                        color: 'rgba(255, 255, 255, 0.8)',
+                                        maxTicksLimit: 8,
+                                        callback: function(value, index, values) {
+                                            const hour = parseInt(this.getLabelForValue(value).split(':')[0]);
+                                            return hour % 3 === 0 ? this.getLabelForValue(value) : '';
+                                        }
+                                    },
                                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                                 },
                                 y: {
-                                    ticks: { color: 'rgba(255, 255, 255, 0.8)' },
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                    ticks: { 
+                                        color: 'rgba(59, 130, 246, 0.8)',
+                                        callback: function(value) { return value + '°C'; }
+                                    },
                                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                                },
+                                y1: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                    min: 0,
+                                    max: 100,
+                                    ticks: { 
+                                        color: 'rgba(147, 51, 234, 0.8)',
+                                        callback: function(value) { return value + '%'; }
+                                    },
+                                    grid: { drawOnChartArea: false }
                                 }
                             },
                             plugins: {
@@ -439,10 +543,12 @@
             updateTime();
             updateWeatherData();
             createForecastChart();
+            updateWeeklyForecast();
             
             setInterval(updateTime, 1000);
             setInterval(updateWeatherData, 10000); // 10秒毎に更新
             setInterval(createForecastChart, 10000); // 10秒毎に更新
+            setInterval(updateWeeklyForecast, 10000); // 10秒毎に更新
 
             // アニメーション遅延設定
             setTimeout(() => {
