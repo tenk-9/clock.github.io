@@ -140,7 +140,7 @@
 
     <!-- 最終更新時刻表示 -->
     <div id="last-update" class="fixed bottom-4 right-4 text-xs opacity-50 bg-black bg-opacity-30 px-2 py-1 rounded">
-        Last Updated: --:--
+        --:--:--
     </div>
 
     <script>
@@ -199,12 +199,15 @@
             // 最終更新時刻を更新する関数
             function updateLastUpdateTime() {
                 const now = new Date();
-                const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                lastUpdate.textContent = `Last Updated: ${timeString}`;
+                const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+                lastUpdate.textContent = timeString;
             }
 
             // 天気情報取得関数（Open-Meteo用）
             async function updateWeatherData() {
+                // 更新中の表示
+                lastUpdate.textContent = 'Fetching...';
+                
                 try {
                     const response = await fetch(apiUrl);
                     if (!response.ok) {
