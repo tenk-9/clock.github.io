@@ -546,11 +546,11 @@
             updateWeeklyForecast();
             
             setInterval(updateTime, 1000);
-            setInterval(updateWeatherData, 10000); // 10秒毎に更新
-            setInterval(createForecastChart, 10000); // 10秒毎に更新
-            setInterval(updateWeeklyForecast, 10000); // 10秒毎に更新
+            setInterval(updateWeatherData, 20000); // 20秒毎に更新
+            setInterval(createForecastChart, 20000); // 20秒毎に更新
+            setInterval(updateWeeklyForecast, 20000); // 20秒毎に更新
 
-            // アニメーション遅延設定
+            アニメーション遅延設定
             setTimeout(() => {
                 document.querySelectorAll('.slide-in').forEach((el, index) => {
                     el.style.animationDelay = `${index * 0.2}s`;
