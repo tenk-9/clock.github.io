@@ -500,13 +500,17 @@
                                         font: { size: 15 },
                                         maxRotation: 0,
                                         autoSkip: true,
+                                        padding: 0,
                                         callback: function(value, index, values) {
                                             const label = this.getLabelForValue(value);
                                             if (!label) return '';
                                             return label.split(':')[0];
                                         }
                                     },
-                                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                                    grid: { 
+                                        color: 'rgba(255, 255, 255, 0.1)',
+                                        offset: false
+                                    }
                                 },
                                 y: {
                                     type: 'linear',
