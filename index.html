@@ -370,7 +370,7 @@
                         precipitationProb.push(prob);
                     }
 
-                    // 日の出・日の入り時刻を取得
+                    // 日の出・日の入り時刻を取得（今日と翌日）
                     const dailyData = data.daily;
                     const today = new Date().toISOString().split('T')[0];
                     console.log('今日の日付:', today);
@@ -384,36 +384,50 @@
                         console.log('今日の日付が見つからないため、最初の日付を使用:', dailyData.time[0]);
                     }
                     
-                    const sunrise = new Date(dailyData.sunrise[todayIndex]);
-                    const sunset = new Date(dailyData.sunset[todayIndex]);
+                    const todaySunrise = new Date(dailyData.sunrise[todayIndex]);
+                    const todaySunset = new Date(dailyData.sunset[todayIndex]);
+                    
+                    // 翌日のデータも取得
+                    let tomorrowSunrise = null;
+                    if (todayIndex + 1 < dailyData.time.length) {
+                        tomorrowSunrise = new Date(dailyData.sunrise[todayIndex + 1]);
+                    }
                     
                     console.log('todayIndex:', todayIndex);
-                    console.log('sunrise:', sunrise);
-                    console.log('sunset:', sunset);
+                    console.log('todaySunrise:', todaySunrise);
+                    console.log('todaySunset:', todaySunset);
+                    console.log('tomorrowSunrise:', tomorrowSunrise);
                     
-                    // 日の出・日の入りのインデックスを計算
-                    let sunriseIndex = -1, sunsetIndex = -1;
-                    if (sunrise) {
-                        for (let i = 0; i < labels.length; i++) {
-                            const hour = parseInt(labels[i].split(':')[0]);
-                            if (hour === sunrise.getHours()) {
-                                sunriseIndex = i;
-                                break;
-                            }
+                    // 日の出・日の入りのインデックスを計算（今日と翌日を考慮）
+                    let todaySunriseIndex = -1, todaySunsetIndex = -1, tomorrowSunriseIndex = -1;
+                    const todaySunriseHour = todaySunrise.getHours();
+                    const todaySunsetHour = todaySunset.getHours();
+                    const tomorrowSunriseHour = tomorrowSunrise ? tomorrowSunrise.getHours() : -1;
+                    
+                    // 現在の時刻から24時間分のグラフの中で各時刻のインデックスを見つける
+                    for (let i = 0; i < labels.length; i++) {
+                        const hour = parseInt(labels[i].split(':')[0]);
+                        const chartTime = new Date(hourlyData.time[startIndex + i]);
+                        
+                        // 今日の日の出
+                        if (todaySunriseIndex === -1 && chartTime >= todaySunrise && hour >= todaySunriseHour) {
+                            todaySunriseIndex = i;
+                        }
+                        
+                        // 今日の日の入り
+                        if (todaySunsetIndex === -1 && chartTime >= todaySunset && hour >= todaySunsetHour) {
+                            todaySunsetIndex = i;
+                        }
+                        
+                        // 翌日の日の出
+                        if (tomorrowSunrise && tomorrowSunriseIndex === -1 && chartTime >= tomorrowSunrise && hour >= tomorrowSunriseHour) {
+                            tomorrowSunriseIndex = i;
                         }
                     }
-                    if (sunset) {
-                        for (let i = 0; i < labels.length; i++) {
-                            const hour = parseInt(labels[i].split(':')[0]);
-                            if (hour === sunset.getHours()) {
-                                sunsetIndex = i;
-                                break;
-                            }
-                        }
-                    }
                     
-                    console.log('sunriseIndex:', sunriseIndex);
-                    console.log('sunsetIndex:', sunsetIndex);
+                    console.log('todaySunriseIndex:', todaySunriseIndex);
+                    console.log('todaySunsetIndex:', todaySunsetIndex);
+                    console.log('tomorrowSunriseIndex:', tomorrowSunriseIndex);
                     console.log('labels:', labels);
                     
                     const ctx = document.getElementById('forecast-chart').getContext('2d');
@@ -432,15 +446,49 @@
                             const xScale = chart.scales.x;
                             
                             ctx.save();
+                            ctx.fillStyle = 'rgba(255, 248, 220, 0.08)';
                             
-                            // 日中の時間帯をハイライト（より薄い色で背景に）
-                            if (options.sunriseIndex >= 0 && options.sunsetIndex >= 0) {
-                                const sunriseX = xScale.getPixelForValue(options.sunriseIndex);
-                                const sunsetX = xScale.getPixelForValue(options.sunsetIndex);
+                            const {todaySunriseIndex, todaySunsetIndex, tomorrowSunriseIndex} = options;
+                            
+                            // 現在時刻を取得して現在のグラフ位置を計算
+                            const now = new Date();
+                            const currentHour = now.getHours();
+                            
+                            // 今日の日の出・日の入り時刻
+                            const todaySunriseHour = options.todaySunriseHour || 6;
+                            const todaySunsetHour = options.todaySunsetHour || 18;
+                            
+                            // 現在時刻が日中かどうかを判定
+                            const isCurrentlyDaytime = currentHour >= todaySunriseHour && currentHour < todaySunsetHour;
+                            
+                            if (isCurrentlyDaytime) {
+                                // 現在時刻が日中の場合：グラフの両端にハイライト
                                 
-                                // 日中のハイライト背景（さらに薄く）
-                                ctx.fillStyle = 'rgba(255, 248, 220, 0.08)';
-                                ctx.fillRect(sunriseX, chartArea.top, sunsetX - sunriseX, chartArea.bottom - chartArea.top);
+                                // 左端：グラフ開始から今日の日の入りまで
+                                if (todaySunsetIndex >= 0) {
+                                    const sunsetX = xScale.getPixelForValue(todaySunsetIndex);
+                                    ctx.fillRect(chartArea.left, chartArea.top, sunsetX - chartArea.left, chartArea.bottom - chartArea.top);
+                                }
+                                
+                                // 右端：翌日の日の出からグラフ終了まで
+                                if (tomorrowSunriseIndex >= 0) {
+                                    const tomorrowSunriseX = xScale.getPixelForValue(tomorrowSunriseIndex);
+                                    ctx.fillRect(tomorrowSunriseX, chartArea.top, chartArea.right - tomorrowSunriseX, chartArea.bottom - chartArea.top);
+                                }
+                            } else {
+                                // 現在時刻が夜間の場合：中央（日の出から日の入りまで）にハイライト
+                                
+                                if (todaySunriseIndex >= 0 && todaySunsetIndex >= 0) {
+                                    const sunriseX = xScale.getPixelForValue(todaySunriseIndex);
+                                    const sunsetX = xScale.getPixelForValue(todaySunsetIndex);
+                                    ctx.fillRect(sunriseX, chartArea.top, sunsetX - sunriseX, chartArea.bottom - chartArea.top);
+                                }
+                                
+                                // 翌日の日の出もハイライト
+                                if (tomorrowSunriseIndex >= 0) {
+                                    const tomorrowSunriseX = xScale.getPixelForValue(tomorrowSunriseIndex);
+                                    ctx.fillRect(tomorrowSunriseX, chartArea.top, chartArea.right - tomorrowSunriseX, chartArea.bottom - chartArea.top);
+                                }
                             }
                             
                             ctx.restore();
@@ -565,8 +613,11 @@
                                     }
                                 },
                                 sunriseSunset: {
-                                    sunriseIndex: sunriseIndex,
-                                    sunsetIndex: sunsetIndex
+                                    todaySunriseIndex: todaySunriseIndex,
+                                    todaySunsetIndex: todaySunsetIndex,
+                                    tomorrowSunriseIndex: tomorrowSunriseIndex,
+                                    todaySunriseHour: todaySunriseHour,
+                                    todaySunsetHour: todaySunsetHour
                                 }
                             }
                         }
