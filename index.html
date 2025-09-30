@@ -81,15 +81,15 @@
 
 <body class="text-white min-h-screen max-h-screen overflow-hidden">
     <div class="flex h-screen w-screen">
-        <div class="w-1/2 flex flex-col p-6">
+        <div class="w-1/2 flex flex-col p-6 pr-2">
             <div class="h-full flex items-center justify-center relative">
-                <div class="clock-face relative w-[24rem] h-[24rem] rounded-full flex items-center justify-center slide-in">
+                <div id="clock-container" class="clock-face relative rounded-full flex items-center justify-center slide-in">
                     <div id="clock-ticks" class="absolute w-full h-full rounded-full">
                         </div>
                     
                     <div id="second-hand" class="absolute w-0.5 h-36 bg-red-500 rounded-full origin-bottom" style="top: 50%; left: 50%; transform: translate(-50%, -100%);"></div>
                     
-                    <div id="digital-clock" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-8xl font-light px-4 py-2 rounded-xl z-20" style="backdrop-filter: blur(2px); font-size: 6.5rem;">00:00</div>
+                    <div id="digital-clock" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-light px-4 rounded-xl z-20" style="backdrop-filter: blur(2px); line-height: 1;">00:00</div>
                 </div>
             </div>
             
@@ -634,11 +634,56 @@
                 }
             }
             
+            // 時計のサイズを動的に設定する関数
+            function setClockSize() {
+                const clockContainer = document.getElementById('clock-container');
+                const leftPanel = clockContainer.parentElement.parentElement; // .w-1/2の要素
+                
+                // 実際のpaddingサイズを計算（p-6 = 1.5rem * 2）
+                const computedStyle = window.getComputedStyle(leftPanel);
+                const paddingLeft = parseFloat(computedStyle.paddingLeft);
+                const paddingRight = parseFloat(computedStyle.paddingRight);
+                const paddingTop = parseFloat(computedStyle.paddingTop);
+                const paddingBottom = parseFloat(computedStyle.paddingBottom);
+                
+                // 下部の日付エリアの高さを動的に計算
+                const dateArea = leftPanel.querySelector('.h-24');
+                const dateAreaHeight = dateArea ? dateArea.offsetHeight : 0;
+                
+                const horizontalMargin = leftPanel.clientWidth * 0.05; // 画面幅の5%を左右余白として確保
+                const availableWidth = leftPanel.clientWidth - paddingLeft - paddingRight;
+                const additionalMargin = leftPanel.clientHeight * 0.05; // 画面高さの5%を追加余白として確保
+                const availableHeight = leftPanel.clientHeight - paddingTop - paddingBottom - dateAreaHeight - additionalMargin;
+                
+                // 使用可能なスペースに基づいて時計のサイズを決定（正方形を維持）
+                const maxSize = Math.min(availableWidth, availableHeight);
+                const clockSize = Math.max(200, Math.min(maxSize, 500)); // 最小200px、最大500px
+                
+                clockContainer.style.width = clockSize + 'px';
+                clockContainer.style.height = clockSize + 'px';
+                
+                // 秒針の長さも動的に調整
+                const secondHand = document.getElementById('second-hand');
+                const handLength = clockSize * 0.38; // 時計サイズの38%
+                secondHand.style.height = handLength + 'px';
+                
+                // デジタル時計の文字サイズも動的に調整
+                const digitalClock = document.getElementById('digital-clock');
+                const fontSize = clockSize * 0.26; // 時計サイズの26%
+                digitalClock.style.fontSize = fontSize + 'px';
+                
+                return clockSize;
+            }
+
             // 時計の目盛り生成（修正版）
             function createClockTicks() {
                 const ticksContainer = document.getElementById('clock-ticks');
-                const clockSize = ticksContainer.offsetWidth; 
+                // 時計のサイズを設定してから目盛りを生成
+                const clockSize = setClockSize();
                 const radius = clockSize / 2;
+                
+                // 既存の目盛りをクリア
+                ticksContainer.innerHTML = '';
                 
                 for (let i = 0; i < 12; i++) { // 12個の目盛りを生成 (5分ごと)
                     const isQuarterHour = i % 3 === 0; // 0, 3, 6, 9番目の目盛り
@@ -646,12 +691,15 @@
                     const tick = document.createElement('div');
                     tick.className = `absolute rounded-full tick-mark ${isQuarterHour ? 'hour-mark' : ''}`;
                     
+                    // 時計サイズに応じて目盛りのサイズを調整
+                    const tickScale = clockSize / 384; // 基準サイズ384pxに対する比率
+                    
                     if (isQuarterHour) {
-                        tick.style.width = '2px';
-                        tick.style.height = '18px';
+                        tick.style.width = Math.max(2, 2 * tickScale) + 'px';
+                        tick.style.height = Math.max(12, 18 * tickScale) + 'px';
                     } else {
-                        tick.style.width = '1px';
-                        tick.style.height = '10px';
+                        tick.style.width = Math.max(1, 1 * tickScale) + 'px';
+                        tick.style.height = Math.max(8, 10 * tickScale) + 'px';
                         tick.style.background = 'linear-gradient(to bottom, #9ca3af 0%, #6b7280 100%)'; // グレー
                         tick.style.opacity = '0.7';
                     }
@@ -660,8 +708,9 @@
                     tick.style.top = '50%';
                     tick.style.left = '50%';
                     // translateで中心から外側に移動させてから、回転させる
-                    tick.style.transform = `translate(-50%, -${radius - 15}px) rotate(${i * 30}deg)`;
-                    tick.style.transformOrigin = `center ${radius - 15}px`;
+                    const tickOffset = Math.max(10, 15 * tickScale);
+                    tick.style.transform = `translate(-50%, -${radius - tickOffset}px) rotate(${i * 30}deg)`;
+                    tick.style.transformOrigin = `center ${radius - tickOffset}px`;
                     
                     ticksContainer.appendChild(tick);
                 }
@@ -690,6 +739,11 @@
                 return fixedHolidays.includes(`${month}/${day}`);
             }
 
+            // ウィンドウリサイズ時の処理
+            function handleResize() {
+                createClockTicks(); // 時計サイズの再計算と目盛りの再生成
+            }
+
             // 初期化とタイマー設定
             createClockTicks();
             updateTime();
@@ -701,6 +755,9 @@
             setInterval(updateWeatherData, 300000); // 5分毎に更新
             setInterval(createForecastChart, 300000); // 5分毎に更新
             setInterval(updateWeeklyForecast, 300000); // 5分毎に更新
+            
+            // ウィンドウリサイズイベントリスナーを追加
+            window.addEventListener('resize', handleResize);
 
             // アニメーション遅延設定
             setTimeout(() => {
