@@ -21,5 +21,5 @@ import WeeklyForecast from '../components/WeeklyForecast.astro';
     --:--:--
   </div>
 
-  <script is:inline src="/weather.js"></script>
+  <script is:inline src={`${import.meta.env.BASE_URL}weather.js`}></script>
 </Layout>
