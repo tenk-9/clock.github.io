@@ -1,0 +1,25 @@
+---
+// 現在の天気カードコンポーネント
+---
+
+<div class="h-1/4 mb-4">
+  <div class="weather-card rounded-md p-6 h-full flex items-center justify-between slide-in">
+    <div class="flex items-center space-x-6">
+      <div id="weather-icon" class="text-7xl">⏳</div>
+      <div class="flex flex-col">
+        <span id="current-temp" class="text-5xl font-bold opacity-90">--°C</span>
+        <span id="weather-desc" class="text-xl opacity-80">読み込み中</span>
+      </div>
+    </div>
+    <div class="flex flex-col items-end space-y-2">
+      <div class="flex items-center space-x-3">
+        <span class="text-sm opacity-70">最高</span>
+        <span id="high-temp" class="text-3xl text-red-400">--°C</span>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="text-sm opacity-70">最低</span>
+        <span id="low-temp" class="text-3xl font-light text-blue-400">--°C</span>
+      </div>
+    </div>
+  </div>
+</div>

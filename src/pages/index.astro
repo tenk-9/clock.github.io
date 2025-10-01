@@ -1,0 +1,25 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AnalogClock from '../components/AnalogClock.astro';
+import WeatherCard from '../components/WeatherCard.astro';
+import ForecastChart from '../components/ForecastChart.astro';
+import WeeklyForecast from '../components/WeeklyForecast.astro';
+---
+
+<Layout title="情報端末">
+  <div class="flex h-screen w-screen">
+    <AnalogClock />
+
+    <div class="w-1/2 flex flex-col p-6">
+      <WeatherCard />
+      <ForecastChart />
+      <WeeklyForecast />
+    </div>
+  </div>
+
+  <div id="last-update" class="fixed bottom-1 right-1 text-xs opacity-15 bg-black bg-opacity-30 px-2 py-1 rounded">
+    --:--:--
+  </div>
+
+  <script is:inline src="/weather.js"></script>
+</Layout>
