@@ -77,4 +77,4 @@ WMO Weather interpretation codesに基づいて天気アイコンと説明を表
 
 ## ライブデモ
 
-https://tenk9.github.io/clock.github.io/ でアクセス可能です。
+https://tenk.yamaguchi.jp/clock.github.io/ でアクセス可能です。
