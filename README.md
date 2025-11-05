@@ -3,6 +3,7 @@
 画面サイズに応じてレスポンシブに表示される、アナログ時計と天気情報を組み合わせたWebダッシュボードです。
 
 ## 表示内容
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/05f007ae-4967-43a2-8999-3002bde72f9d" />
 
 ### 🕐 アナログ時計
 - **現在時刻**: デジタル表示（24時間形式）
@@ -78,3 +79,6 @@ WMO Weather interpretation codesに基づいて天気アイコンと説明を表
 ## ライブデモ
 
 https://tenk.yamaguchi.jp/clock.github.io/ でアクセス可能です。
+手元の端末以外で検証を行っていないので、利用環境によってはレイアウトが崩れる可能性があります。
+
+
