@@ -2,6 +2,12 @@
 
 画面サイズに応じてレスポンシブに表示される、アナログ時計と天気情報を組み合わせたWebダッシュボードです。
 
+Astroフレームワークを使用したコンポーネントベースの静的サイトとして構築されています。
+
+## ライブデモ
+
+https://tenk.yamaguchi.jp/clock.github.io/ でアクセス可能です。
+
 ## 表示内容
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/05f007ae-4967-43a2-8999-3002bde72f9d" />
 
@@ -21,6 +27,100 @@
 - **最高・最低気温**: 当日の予想気温
 - **24時間予報グラフ**: 気温と降水確率の推移（日の出・日の入り時間をハイライト）
 - **週間天気予報**: 7日間の天気アイコンと最高・最低気温
+
+## 技術スタック
+
+- **フレームワーク**: [Astro](https://astro.build/) v4.16.18（静的サイトジェネレーター）
+- **言語**: TypeScript（strict mode）
+- **スタイリング**: Tailwind CSS（CDN経由）
+- **グラフ描画**: Chart.js v4.4.7
+- **デプロイ**: GitHub Actions + GitHub Pages
+- **フォント**: Inter（Google Fonts）
+
+## セットアップと開発
+
+### 必要環境
+- Node.js（推奨: v18以上）
+- npm
+
+### インストール
+
+```bash
+# 依存関係のインストール
+npm install
+```
+
+### 開発サーバー
+
+```bash
+# 開発サーバーを起動（ホットリロード対応）
+npm run dev
+```
+
+開発サーバーは `http://localhost:4321` で起動します。
+
+### ビルド
+
+```bash
+# 本番用ビルド（TypeScriptチェック + Astroビルド）
+npm run build
+
+# ビルド結果のプレビュー
+npm run preview
+```
+
+ビルド結果は `dist/` ディレクトリに出力されます。
+
+## プロジェクト構造
+
+```
+/
+├── src/
+│   ├── layouts/
+│   │   └── Layout.astro          # ベースレイアウト（<head>、CDN読み込みなど）
+│   ├── components/
+│   │   ├── AnalogClock.astro     # アナログ時計コンポーネント
+│   │   ├── WeatherCard.astro     # 現在の天気表示
+│   │   ├── ForecastChart.astro   # 24時間予報グラフ
+│   │   └── WeeklyForecast.astro  # 週間天気予報
+│   └── pages/
+│       └── index.astro           # メインページ（全コンポーネントを統合）
+├── public/
+│   └── weather.js                # 天気API連携ロジック
+├── .github/workflows/
+│   └── deploy.yml                # 自動デプロイ設定
+├── astro.config.mjs              # Astro設定ファイル
+├── package.json                  # 依存関係とスクリプト
+└── tsconfig.json                 # TypeScript設定
+```
+
+## コンポーネント構成
+
+### Layout.astro
+基本的なHTML構造を提供するベースレイアウト。CDN経由でTailwind CSSとChart.jsを読み込み、ダークテーマのグローバルスタイルを定義します。
+
+### AnalogClock.astro
+アナログ時計の表示と動作を担当。以下の機能を含みます：
+- 時刻の目盛り生成と描画
+- 秒針のリアルタイム回転アニメーション
+- 画面サイズに応じた時計サイズの動的調整
+- 日付表示（曜日・祝日の色分け表示）
+
+### WeatherCard.astro
+現在の天気情報を表示するカード型コンポーネント。気温、天気アイコン、天気説明、最高・最低気温を表示します。
+
+### ForecastChart.astro
+24時間予報をChart.jsで可視化するコンポーネント。気温と降水確率の折れ線グラフを描画し、日の出・日の入り時間を背景でハイライトします。
+
+### WeeklyForecast.astro
+7日間の週間天気予報を表示するコンポーネント。各日の天気アイコンと最高・最低気温を並べて表示します。
+
+### weather.js
+天気APIとの連携を担当する外部スクリプト：
+- Geolocation APIによる位置情報取得（フォールバック: 東大和市）
+- Open-Meteo APIからの天気データ取得
+- 各コンポーネントへのデータ反映
+- 5分間隔での自動更新
 
 ## 使用API
 
@@ -47,38 +147,34 @@ WMO Weather interpretation codesに基づいて天気アイコンと説明を表
 - 85-86: にわか雪 🌨️
 - 95-99: 雷雨 🌩️
 
-## 技術仕様
+## スタイリングとデザイン
 
-### レスポンシブ対応
-- 画面の左半分領域に応じて時計サイズを動的調整
-- パディングと日付エリアを考慮した利用可能領域の計算
-- ウィンドウリサイズ時の自動再調整
-
-### スタイリング
-- **フレームワーク**: Tailwind CSS
 - **テーマ**: ダークグラデーション背景
 - **エフェクト**: ガラスモーフィズム、バックドロップフィルター
-- **フォント**: Inter（Google Fonts）
-
-### グラフ描画
-- **ライブラリ**: Chart.js
-- **表示内容**: 24時間の気温・降水確率
-- **特殊機能**: 日の出・日の入り時間の背景ハイライト
+- **レスポンシブ対応**: 画面サイズに応じて時計サイズを動的調整（200px〜500px）
+- **レイアウト**: 2カラム構成（左: アナログ時計、右: 天気情報）
 
 ## 更新タイミング
 
 - **時刻表示**: 1秒間隔
-- **天気データ**: 5分間隔
+- **天気データ**: 5分間隔（自動更新）
 - **最終更新時刻**: 右下に表示
 
-## ファイル構成
+## デプロイ
 
-- `index.html`: メインアプリケーション（HTML/CSS/JavaScript）
-- `README.md`: このドキュメント
+このプロジェクトはGitHub Actionsを使用して自動的にデプロイされます。
 
-## ライブデモ
+### 自動デプロイフロー
 
-https://tenk.yamaguchi.jp/clock.github.io/ でアクセス可能です。
-手元の端末以外で検証を行っていないので、利用環境によってはレイアウトが崩れる可能性があります。
+1. `main` ブランチへのpush時に自動実行
+2. Node.js環境のセットアップ
+3. 依存関係のインストール
+4. Astroビルドの実行（`npm run build`）
+5. GitHub Pagesへのデプロイ
+
+### カスタムドメイン設定
+
+- ベースURL: `/clock.github.io` （`astro.config.mjs` で設定）
+- カスタムドメイン: https://tenk.yamaguchi.jp/clock.github.io/
 
 
