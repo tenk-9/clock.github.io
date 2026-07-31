@@ -6,7 +6,7 @@ Astroフレームワークを使用したコンポーネントベースの静的
 
 ## ライブデモ
 
-https://tenk.yamaguchi.jp/clock.github.io/ でアクセス可能です。
+https://clock.tenk.yamaguchi.jp/ でアクセス可能です。
 
 ## 表示内容
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/05f007ae-4967-43a2-8999-3002bde72f9d" />
